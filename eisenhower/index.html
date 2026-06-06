@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eisenhower Matrix</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── Import Banner (shown when URL has encoded data) ── -->
+  <div class="import-banner" id="importBanner">
+    <div class="import-banner-inner">
+      <span class="import-icon">📥</span>
+      <div class="import-text">
+        <strong>Sync data detected</strong>
+        <span>Tasks from another device are ready to import.</span>
+      </div>
+      <div class="import-actions">
+        <button class="btn-import-merge"  onclick="importTasks('merge')">Merge</button>
+        <button class="btn-import-replace" onclick="importTasks('replace')">Replace</button>
+        <button class="btn-import-cancel" onclick="dismissImport()">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Sync Modal ── -->
+  <div class="modal-backdrop" id="modalBackdrop" onclick="closeModal()"></div>
+  <div class="modal" id="syncModal">
+    <div class="modal-header">
+      <span class="modal-title">SYNC TO DEVICE</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-hint">Scan the QR code with your phone, or copy the link and open it in any browser.</p>
+      <div class="qr-wrap" id="qrWrap"></div>
+      <div class="sync-url-row">
+        <input class="sync-url-input" id="syncUrlInput" readonly />
+        <button class="btn-copy" id="copyBtn" onclick="copyUrl()">Copy</button>
+      </div>
+      <div class="modal-note">
+        ⚠ The link encodes your current tasks. Send it only to yourself.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Header ── -->
+  <header class="header">
+    <div class="header-left">
+      <h1 class="title">EISENHOWER MATRIX</h1>
+      <p class="subtitle">Decide what matters. Cut the rest.</p>
+    </div>
+    <div class="header-right">
+      <div class="progress-pill" id="progressPill" style="display:none;">
+        <span id="progressText">0/0 done</span>
+      </div>
+      <button class="sync-btn" onclick="openSyncModal()" title="Sync to another device">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M13.5 2.5A6.5 6.5 0 0 0 2 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M2.5 13.5A6.5 6.5 0 0 0 14 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M2 4V7H5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M14 12v-3h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Sync
+      </button>
+      <div class="saved-badge" id="savedBadge">✓ saved</div>
+    </div>
+  </header>
+
+  <!-- ── Main Layout ── -->
+  <main class="layout">
+
+   
+
+    <div class="matrix-wrapper">
+
+      
+
+      <div class="grid">
+
+        <!-- DO -->
+        <div class="quadrant" data-q="do">
+          <div class="q-header" style="--qcolor:#ef4444;--qborder:rgba(239,68,68,0.22);--qbg:rgba(239,68,68,0.07);">
+            <div class="q-title-row">
+              <span class="q-label" style="color:#ef4444;">DO</span>
+              <span class="q-count" id="count-do">0</span>
+            </div>
+            <div class="q-sub">Urgent &amp; Important</div>
+            <div class="q-desc">Do it now</div>
+          </div>
+          <ul class="q-body" id="list-do"></ul>
+          <div class="q-input-row">
+            <input class="q-input" id="input-do" placeholder="Add task…" autocomplete="off" />
+            <button class="q-add-btn" onclick="addTask('do')" style="--qcolor:#ef4444;">+</button>
+          </div>
+        </div>
+
+        <!-- SCHEDULE -->
+        <div class="quadrant" data-q="schedule">
+          <div class="q-header" style="--qcolor:#3b82f6;--qborder:rgba(59,130,246,0.22);--qbg:rgba(59,130,246,0.07);">
+            <div class="q-title-row">
+              <span class="q-label" style="color:#3b82f6;">SCHEDULE</span>
+              <span class="q-count" id="count-schedule">0</span>
+            </div>
+            <div class="q-sub">Not Urgent &amp; Important</div>
+            <div class="q-desc">Plan for later</div>
+          </div>
+          <ul class="q-body" id="list-schedule"></ul>
+          <div class="q-input-row">
+            <input class="q-input" id="input-schedule" placeholder="Add task…" autocomplete="off" />
+            <button class="q-add-btn" onclick="addTask('schedule')" style="--qcolor:#3b82f6;">+</button>
+          </div>
+        </div>
+
+        <!-- DELEGATE -->
+        <div class="quadrant" data-q="delegate">
+          <div class="q-header" style="--qcolor:#f59e0b;--qborder:rgba(245,158,11,0.22);--qbg:rgba(245,158,11,0.07);">
+            <div class="q-title-row">
+              <span class="q-label" style="color:#f59e0b;">DELEGATE</span>
+              <span class="q-count" id="count-delegate">0</span>
+            </div>
+            <div class="q-sub">Urgent &amp; Not Important</div>
+            <div class="q-desc">Hand it off</div>
+          </div>
+          <ul class="q-body" id="list-delegate"></ul>
+          <div class="q-input-row">
+            <input class="q-input" id="input-delegate" placeholder="Add task…" autocomplete="off" />
+            <button class="q-add-btn" onclick="addTask('delegate')" style="--qcolor:#f59e0b;">+</button>
+          </div>
+        </div>
+
+        <!-- ELIMINATE -->
+        <div class="quadrant" data-q="eliminate">
+          <div class="q-header" style="--qcolor:#6b7280;--qborder:rgba(107,114,128,0.22);--qbg:rgba(107,114,128,0.07);">
+            <div class="q-title-row">
+              <span class="q-label" style="color:#6b7280;">ELIMINATE</span>
+              <span class="q-count" id="count-eliminate">0</span>
+            </div>
+            <div class="q-sub">Not Urgent &amp; Not Important</div>
+            <div class="q-desc">Drop it</div>
+          </div>
+          <ul class="q-body" id="list-eliminate"></ul>
+          <div class="q-input-row">
+            <input class="q-input" id="input-eliminate" placeholder="Add task…" autocomplete="off" />
+            <button class="q-add-btn" onclick="addTask('eliminate')" style="--qcolor:#6b7280;">+</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>
